@@ -49,8 +49,8 @@ data = load_data_from_sheets()
 
 # 데이터 로드 성공 시 화면 출력
 if data:
-    # CSS 스타일 적용
+    # --- [디자인] CSS 스타일 ---
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
-        * { font-family: 'Pre
+        * { font-family: 'Pretendard', sans-
