@@ -5,32 +5,31 @@ import requests
 import io
 from datetime import datetime
 
-# --- [1] 구글 시트 설정 ---
-# 이미 제가 생성해드린 시트 ID를 넣어두었습니다.
-SHEET_ID = "1u2QkksoyVFS7NWoHi-H93WlxKynAyEx8s5Q_OBNnsl0"
+# --- [1] 구글 시트 설정 (보내주신 새로운 시트 ID 적용) ---
+SHEET_ID = "1vmlVo0HCIMJRoCkR57Fqa-GSk6jp1s7Jq7yYnhtwX70"
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
-st.set_page_config(page_title="KGC Dashboard", layout="wide")
+st.set_page_config(page_title="KGC Strategy Dashboard", layout="wide")
 
 @st.cache_data(ttl=10)
-def load_sheet_data():
+def load_data():
     try:
-        res = requests.get(SHEET_URL)
-        res.encoding = 'utf-8'
-        if res.status_code != 200: return None
-        df = pd.read_csv(io.StringIO(res.text))
-        # 제목과 데이터의 공백을 제거합니다.
+        response = requests.get(SHEET_URL)
+        response.encoding = 'utf-8'
+        if response.status_code != 200:
+            return None
+        df = pd.read_csv(io.StringIO(response.text))
+        # 제목과 데이터의 앞뒤 공백을 제거하여 인식률을 높입니다.
         df.columns = [c.strip().lower() for c in df.columns]
         df['key'] = df['key'].astype(str).str.strip()
         return df.set_index('key')['value'].to_dict()
     except:
         return None
 
-raw_data = load_sheet_data()
+raw_data = load_data()
 
-# --- [2] 데이터 로드 성공 시 화면 출력 ---
+# 데이터 로드 성공 시 화면 출력
 if raw_data:
-    # CSS 디자인
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
@@ -42,25 +41,24 @@ if raw_data:
     </style>
     """, unsafe_allow_html=True)
 
-    # 상단 헤더
     st.markdown(f"""
     <div class="header-box">
         <h1 style="margin:0; font-size: 2.2rem;">주간 마케팅 통찰 보고서</h1>
-        <p style="margin:0; opacity:0.8;">스프레드시트 연동 중 (업데이트: {datetime.now().strftime('%H:%M:%S')})</p>
+        <p style="margin:0; opacity:0.8;">데이터 연동 중 (업데이트: {datetime.now().strftime('%H:%M:%S')})</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # KPI 카드
+    # KPI 카드 (데이터가 없을 경우 0 표시)
     k1, k2, k3, k4 = st.columns(4)
-    kpis = [(k1, "전체 모멘텀", f"{raw_data.get('momentum', 0)}%"), 
-            (k2, "지역 편차", f"{raw_data.get('deviation', 0)}%"),
-            (k3, "MZ 도달율", f"{raw_data.get('mz_reach', 0)}%"), 
-            (k4, "NPS 점수", raw_data.get('nps', 0))]
+    k_list = [(k1, "전체 모멘텀", f"{raw_data.get('momentum', 0)}%"),
+              (k2, "지역 편차", f"{raw_data.get('deviation', 0)}%"),
+              (k3, "MZ 도달율", f"{raw_data.get('mz_reach', 0)}%"),
+              (k4, "NPS 점수", raw_data.get('nps', 0))]
     
-    for col, lab, val in kpis:
+    for col, lab, val in k_list:
         col.markdown(f'<div class="report-card"><p class="kpi-label">{lab}</p><p class="kpi-value">{val}</p></div>', unsafe_allow_html=True)
 
-    # 차트와 제언
+    # 차트 및 제언
     c1, c2 = st.columns([2, 1])
     with c1:
         st.markdown('<div class="report-card"><h3>채널별 판매 성과</h3>', unsafe_allow_html=True)
@@ -73,8 +71,8 @@ if raw_data:
         st.markdown(f"""
         <div class="report-card" style="height: 100%; border-left: 10px solid #c53030;">
             <h3 style="color:#c53030; margin-top:0;">팀장 종합 제언</h3>
-            <p style="font-size:1.1rem; line-height:1.6; color: #333;">{raw_data.get('note', '내용 없음')}</p>
+            <p style="font-size:1.1rem; line-height:1.6; color: #333;">{raw_data.get('note', '시트에 내용을 입력하세요.')}</p>
         </div>
         """, unsafe_allow_html=True)
 else:
-    st.error("⚠️ 데이터를 불러올 수 없습니다. 공유 설정을 '링크가 있는 모든 사용자'로 바꿔주세요.")
+    st.error("⚠️ 데이터를 불러올 수 없습니다. 시트의 공유 설정과 형식을 확인해주세요.")
