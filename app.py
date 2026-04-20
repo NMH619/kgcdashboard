@@ -21,7 +21,7 @@ def load_data():
 
 data = load_data()
 
-# --- 2. CSS 스타일 (따옴표 오류 수정됨) ---
+# --- 2. CSS 스타일 ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
@@ -51,21 +51,4 @@ for col, (label, val) in zip([k1, k2, k3, k4], kpis):
     col.markdown(f'<div class="report-card"><p class="kpi-label">{label}</p><p class="kpi-value">{val}</p></div>', unsafe_allow_html=True)
 
 # --- 5. 차트 섹션 ---
-col_left, col_right = st.columns([2, 1])
-
-with col_left:
-    st.markdown('<div class="report-card"><h3>채널별 판매 성과</h3>', unsafe_allow_html=True)
-    fig_bar = px.bar(
-        x=['수도권(편점)', '수도권(기타)', '지방(마트)', '지방(기타)'], 
-        y=data['chart_data'], 
-        color=data['chart_data'], 
-        color_continuous_scale='Reds'
-    )
-    st.plotly_chart(fig_bar, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with col_right:
-    st.markdown('<div class="report-card"><h3>연령 비중</h3>', unsafe_allow_html=True)
-    fig_pie = px.pie(values=[45, 38, 17], names=['2030', '4050', '60+'], hole=0.5, color_discrete_sequence=['#c53030', '#4a5568', '#a0aec0'])
-    st.plotly_chart(fig_pie, use_container_width=True)
-    st.markdown('
+col_left, col_right = st.columns([2,
