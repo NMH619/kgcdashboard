@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KGC 브랜드 전략실: 주간 마케팅 통찰 보고서</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f3f4f6; color: #1f2937; }
+        .kgc-red { background-color: #c53030; }
+        .kgc-red-text { color: #c53030; }
+        .report-card { background: white; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; overflow: hidden; }
+        .gradient-header { background: linear-gradient(135deg, #c53030 0%, #822727 100%); }
+        .insight-tag { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="report-card gradient-header text-white p-8 mb-8 relative">
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="bg-white text-red-700 px-3 py-1 rounded font-black text-sm uppercase">Secretariat</span>
+                    <span class="text-red-100 text-sm">Marketing Strategy Team</span>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-extrabold mb-2">주간 마케팅 통찰 보고서 (3월 4주차)</h1>
+                <p class="text-red-100 opacity-90 text-lg">제품: 정관장 에브리타임 밸런스 (리뉴얼)</p>
+            </div>
+            <div class="absolute right-8 bottom-8 text-right hidden md:block">
+                <p class="text-sm opacity-70">작성자: 마케팅 전략실 남무현</p>
+                <p class="text-sm opacity-70">발신: 브랜드 매니저(BM) 앞</p>
+            </div>
+        </header>
+
+        <!-- KPI Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="report-card p-6 border-b-4 border-red-600">
+                <p class="text-gray-500 text-sm font-bold mb-1">전체 판매 모멘텀</p>
+                <div class="flex items-center gap-2">
+                    <span class="text-3xl font-black text-gray-800">우수(Good)</span>
+                    <span class="text-green-500 text-sm">▲ 6.5%</span>
+                </div>
+            </div>
+            <div class="report-card p-6 border-b-4 border-orange-500">
+                <p class="text-gray-500 text-sm font-bold mb-1">채널별 편차</p>
+                <div class="flex items-center gap-2">
+                    <span class="text-3xl font-black text-gray-800">17.0%</span>
+                    <span class="text-gray-400 text-xs">수도권 vs 지방</span>
+                </div>
+            </div>
+            <div class="report-card p-6 border-b-4 border-blue-600">
+                <p class="text-gray-500 text-sm font-bold mb-1">코어 타겟 도달</p>
+                <div class="flex items-center gap-2">
+                    <span class="text-3xl font-black text-gray-800">45.0%</span>
+                    <span class="insight-tag">MZ세대</span>
+                </div>
+            </div>
+            <div class="report-card p-6 border-b-4 border-green-600">
+                <p class="text-gray-500 text-sm font-bold mb-1">고객 만족도(NPS)</p>
+                <div class="flex items-center gap-2">
+                    <span class="text-3xl font-black text-gray-800">7.8/10</span>
+                    <span class="text-blue-500 text-xs">상향세</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Regional Analysis -->
+            <div class="report-card p-6 lg:col-span-2">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">지역별 및 채널별 판매 성과</h3>
+                    <span class="text-xs text-gray-400 font-medium">* 편의점 채널 전주 대비 +15%</span>
+                </div>
+                <div class="h-80">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Demographic Analysis -->
+            <div class="report-card p-6">
+                <h3 class="text-xl font-bold mb-6 text-center">구매 고객 연령 비중</h3>
+                <div class="h-64">
+                    <canvas id="ageChart"></canvas>
+                </div>
+                <div class="mt-8 bg-gray-50 p-4 rounded-xl">
+                    <p class="text-sm font-bold mb-2">💡 팀장 Insight</p>
+                    <p class="text-xs text-gray-600 leading-relaxed">
+                        2030 비중이 45%로 압도적입니다. 이는 리뉴얼의 '맛'과 '패키지'가 사회초년생의 **자기관리(Self-care)** 및 **간편 선물** 트렌드에 적중했음을 시사합니다.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sentiment & Trend Analysis -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <!-- Voice of Customer -->
+            <div class="report-card p-6 bg-white">
+                <h3 class="text-xl font-bold mb-6">고객 경험(CX) 키워드 맵</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-bold text-green-600">디자인 및 선물 적합성</span>
+                            <span class="text-sm font-medium">82%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 82%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-bold text-blue-600">맛 개선 체감 (쓴맛 감소)</span>
+                            <span class="text-sm font-medium">75%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-bold text-red-600">가격 저항감</span>
+                            <span class="text-sm font-medium">38%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-red-500 h-2 rounded-full" style="width: 38%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-bold text-orange-600">패키지 개봉 불편(뻑뻑함)</span>
+                            <span class="text-sm font-medium">12%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-orange-500 h-2 rounded-full" style="width: 12%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trend Sync -->
+            <div class="report-card p-6 bg-slate-900 text-white">
+                <h3 class="text-xl font-bold mb-6">라이프스타일 트렌드 매칭</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                        <p class="text-orange-400 font-black text-2xl mb-1">30% UP</p>
+                        <p class="text-sm font-bold">등산 & 테니스</p>
+                        <p class="text-xs text-slate-400 mt-2">고강도 운동 전후 활력 보충 아이템으로 포지셔닝 중</p>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                        <p class="text-blue-400 font-black text-2xl mb-1">TOP 1</p>
+                        <p class="text-sm font-bold">편의점 건강기능식품</p>
+                        <p class="text-xs text-slate-400 mt-2">수도권 2030의 높은 접근성이 매출 견인</p>
+                    </div>
+                </div>
+                <div class="mt-6 p-4 bg-red-900/30 rounded-xl border border-red-500/30">
+                    <p class="text-sm"><span class="font-bold">전략 포인트:</span> 아웃도어 의류 브랜드 혹은 테니스 동호회와 연계된 '에너지 팩' 프로모션 검토 필요</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Strategy Proposal -->
+        <div class="report-card p-8 bg-white border-l-8 border-red-600">
+            <h3 class="text-2xl font-bold mb-6">팀장 종합 제언 (Action Plan)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h4 class="font-bold text-lg mb-2 text-red-700">1. 채널 전략 고도화</h4>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        수도권 편의점 강세는 확인되었으나, 지방 대형마트 정체가 우려됩니다. 지방 거점 마트에서는 **'가족 단위 건강 캠페인'**으로 소구점을 전환하여 오프라인 매대 가시성을 확보해야 합니다.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-2 text-red-700">2. 제품 경험(UX) 개선</h4>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        박스 개봉의 '뻑뻑함' 이슈는 사소해 보이나 선물용 구매자에게 치명적일 수 있습니다. 생산 공정팀과 협의하여 **이지-오픈(Easy-Open)** 구조를 즉각 점검하고 개선 로드맵을 수립하십시오.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-2 text-red-700">3. 커뮤니케이션 타겟팅</h4>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        등산/테니스 키워드 유입은 '건강'을 넘어 '성취'와 '퍼포먼스'를 지향하는 MZ의 욕구를 보여줍니다. **SNS 앰배서더 운영** 시 운동 인플루언서를 적극 활용하여 '오운완' 필수템으로 자리매김하십시오.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Main Performance Chart (Bar)
+        const mainCtx = document.getElementById('mainChart').getContext('2d');
+        new Chart(mainCtx, {
+            type: 'bar',
+            data: {
+                labels: ['수도권(편의점)', '수도권(기타)', '지방(대형마트)', '지방(기타)'],
+                datasets: [{
+                    label: '전주 대비 증감률 (%)',
+                    data: [15, 8, -2, 1.5],
+                    backgroundColor: [
+                        'rgba(197, 48, 48, 0.8)',
+                        'rgba(197, 48, 48, 0.4)',
+                        'rgba(74, 85, 104, 0.8)',
+                        'rgba(74, 85, 104, 0.4)'
+                    ],
+                    borderRadius: 10,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        grid: { color: '#f3f4f6' },
+                        title: { display: true, text: '증감률 (%)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Age Demographics Chart (Doughnut)
+        const ageCtx = document.getElementById('ageChart').getContext('2d');
+        new Chart(ageCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['2030 세대', '4050 세대', '60대 이상'],
+                datasets: [{
+                    data: [45, 38, 17],
+                    backgroundColor: ['#c53030', '#4a5568', '#a0aec0'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                cutout: '65%'
+            }
+        });
+    </script>
+</body>
+</html>
