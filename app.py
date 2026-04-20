@@ -1,78 +1,115 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import requests
-import io
-from datetime import datetime
 
-# --- [1] 구글 시트 설정 (보내주신 새로운 시트 ID 적용) ---
-SHEET_ID = "1vmlVo0HCIMJRoCkR57Fqa-GSk6jp1s7Jq7yYnhtwX70"
-SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
+# 1. 페이지 기본 설정
+st.set_page_config(page_title="KGC 브랜드전략실 - 3월 4주차 대시보드", layout="wide")
 
-st.set_page_config(page_title="KGC Strategy Dashboard", layout="wide")
+# --- [데이터 로드 섹션] ---
+# 구글 시트 주소 설정 (본인의 시트 ID와 gid 번호를 아래에 입력하세요)
+# 시트 URL 끝의 /edit... 부분을 /export?format=csv&gid=... 로 수정해야 합니다.
 
-@st.cache_data(ttl=10)
-def load_data():
-    try:
-        response = requests.get(SHEET_URL)
-        response.encoding = 'utf-8'
-        if response.status_code != 200:
-            return None
-        df = pd.read_csv(io.StringIO(response.text))
-        # 제목과 데이터의 앞뒤 공백을 제거하여 인식률을 높입니다.
-        df.columns = [c.strip().lower() for c in df.columns]
-        df['key'] = df['key'].astype(str).str.strip()
-        return df.set_index('key')['value'].to_dict()
-    except:
-        return None
+# 예시 주소 (실제 본인의 시트 주소로 교체 필요)
+KPI_URL = "https://docs.google.com/spreadsheets/d/1eDRHR3Jfd0P7hwmZy1d_Ncdb-AXhGhwe62lFaNKjF8s/export?format=csv&gid=0"
+REGION_URL = "https://docs.google.com/spreadsheets/d/1eDRHR3Jfd0P7hwmZy1d_Ncdb-AXhGhwe62lFaNKjF8s/export?format=csv&gid=1330935199"
+AGE_URL = "https://docs.google.com/spreadsheets/d/1eDRHR3Jfd0P7hwmZy1d_Ncdb-AXhGhwe62lFaNKjF8s/export?format=csv&gid=547463562"
 
-raw_data = load_data()
+@st.cache_data(ttl=600)  # 10분간 캐시 유지 (성능 최적화)
+def load_data(url):
+    return pd.read_csv(url)
 
-# 데이터 로드 성공 시 화면 출력
-if raw_data:
-    st.markdown("""
+try:
+    df_kpi = load_data(KPI_URL)
+    df_region = load_data(REGION_URL)
+    df_age = load_data(AGE_URL)
+except Exception as e:
+    st.error("⚠️ 데이터를 불러올 수 없습니다. 구글 시트 공유 설정과 URL을 확인해주세요.")
+    st.stop()
+# -----------------------
+
+# 2. 커스텀 CSS
+st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
-        * { font-family: 'Pretendard', sans-serif; }
-        .report-card { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #eee; margin-bottom: 1rem; }
-        .header-box { background: linear-gradient(135deg, #c53030 0%, #9b1c1c 100%); padding: 2rem; border-radius: 12px; color: white; margin-bottom: 2rem; }
-        .kpi-value { font-size: 2rem; font-weight: 900; color: #1a202c; margin: 0; }
-        .kpi-label { font-size: 0.85rem; font-weight: 700; color: #718096; margin-bottom: 0.5rem; }
+    .kpi-value { font-size: 28px; font-weight: bold; color: #A6192E; }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-    st.markdown(f"""
-    <div class="header-box">
-        <h1 style="margin:0; font-size: 2.2rem;">주간 마케팅 통찰 보고서</h1>
-        <p style="margin:0; opacity:0.8;">데이터 연동 중 (업데이트: {datetime.now().strftime('%H:%M:%S')})</p>
-    </div>
-    """, unsafe_allow_html=True)
+# 3. 헤더 영역
+col_header1, col_header2 = st.columns([3, 1])
+with col_header1:
+    st.title("📈 에브리타임 밸런스 마케팅 대시보드")
+    st.markdown("**2026년 3월 4주차 | 리뉴얼 제품 판매 현황 분석**")
+with col_header2:
+    st.write("") 
+    st.info("👤 **팀장: 인선미** (Brand Strategy)")
 
-    # KPI 카드 (데이터가 없을 경우 0 표시)
-    k1, k2, k3, k4 = st.columns(4)
-    k_list = [(k1, "전체 모멘텀", f"{raw_data.get('momentum', 0)}%"),
-              (k2, "지역 편차", f"{raw_data.get('deviation', 0)}%"),
-              (k3, "MZ 도달율", f"{raw_data.get('mz_reach', 0)}%"),
-              (k4, "NPS 점수", raw_data.get('nps', 0))]
+st.markdown("---")
+
+# 4. KPI 카드 영역 (구글 시트 데이터 기반)
+# 시트 구성: label, value, delta 컬럼이 있다고 가정
+kpi_cols = st.columns(len(df_kpi))
+
+for i, col in enumerate(kpi_cols):
+    # delta_color는 2번째(index 1), 4번째(index 3) 카드일 때 off 처리 (기존 로직 유지)
+    d_color = "off" if i in [1, 3] else "normal"
+    col.metric(
+        label=df_kpi.iloc[i]['label'], 
+        value=df_kpi.iloc[i]['value'], 
+        delta=df_kpi.iloc[i]['delta'],
+        delta_color=d_color
+    )
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# 5. 차트 영역
+chart_col1, chart_col2 = st.columns(2)
+
+with chart_col1:
+    st.subheader("지역별 판매 성장률 (%)")
+    # 시트 구성: 지역, 성장률 컬럼
+    fig_region = px.bar(
+        df_region, x="지역", y="성장률", text="성장률", 
+        color="지역", color_discrete_sequence=['#A6192E', '#94a3b8']
+    )
+    fig_region.update_layout(showlegend=False, margin=dict(t=20, b=20, l=0, r=0))
+    st.plotly_chart(fig_region, use_container_width=True)
+
+with chart_col2:
+    st.subheader("소비자 연령대 분포")
+    # 시트 구성: 연령대, 비중 컬럼
+    fig_age = px.pie(
+        df_age, values="비중", names="연령대", hole=0.5,
+        color_discrete_sequence=['#A6192E', '#C5A059', '#cbd5e1']
+    )
+    fig_age.update_layout(margin=dict(t=20, b=20, l=0, r=0), legend=dict(orientation="h", y=-0.1))
+    st.plotly_chart(fig_age, use_container_width=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# 6. 피드백 및 인사이트
+bottom_col1, bottom_col2 = st.columns([2, 1])
+
+with bottom_col1:
+    st.subheader("💬 실시간 고객 VOC 분석")
+    voc1, voc2 = st.columns(2)
+    with voc1:
+        st.success("**🟢 Positive**\n\n- 포장이 세련되어 선물용으로 최고입니다.\n- 기존 홍삼보다 쓴맛이 덜해서 먹기 편해요.")
+    with voc2:
+        st.error("**🔴 Improvement**\n\n- 리뉴얼 후 가격이 조금 오른 것 같아요.\n- **박스 개봉 시 가끔 뻑뻑함이 느껴집니다.**")
     
-    for col, lab, val in k_list:
-        col.markdown(f'<div class="report-card"><p class="kpi-label">{lab}</p><p class="kpi-value">{val}</p></div>', unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    st.subheader("💡 팀장 전략 제언 (Action Items)")
+    st.info("""
+    1. **아웃도어 마케팅:** 테니스/등산 커뮤니티 연계 '오운완' 캠페인 즉시 실행
+    2. **채널 최적화:** 지방권 대형마트 '가족 건강 키트' 번들 기획 구성
+    3. **품질 개선:** 패키지 개봉 편의성(Easy-off) 관련 생산 파트 피드백 전달
+    """)
 
-    # 차트 및 제언
-    c1, c2 = st.columns([2, 1])
-    with c1:
-        st.markdown('<div class="report-card"><h3>채널별 판매 성과</h3>', unsafe_allow_html=True)
-        cv = [float(raw_data.get(f'chart_{i}', 0)) for i in range(1, 5)]
-        fig = px.bar(x=['수도권(편점)', '수도권(기타)', '지방(마트)', '지방(기타)'], y=cv, color=cv, color_continuous_scale='Reds')
-        st.plotly_chart(fig, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with c2:
-        st.markdown(f"""
-        <div class="report-card" style="height: 100%; border-left: 10px solid #c53030;">
-            <h3 style="color:#c53030; margin-top:0;">팀장 종합 제언</h3>
-            <p style="font-size:1.1rem; line-height:1.6; color: #333;">{raw_data.get('note', '시트에 내용을 입력하세요.')}</p>
-        </div>
-        """, unsafe_allow_html=True)
-else:
-    st.error("⚠️ 데이터를 불러올 수 없습니다. 시트의 공유 설정과 형식을 확인해주세요.")
+with bottom_col2:
+    st.subheader("🔥 트렌드 키워드")
+    st.markdown("`#사회초년생` `#테니스` `#오운완` `#선물추천` `#등산` `#에너지부스터`")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("##### 📌 Today's Summary")
+    st.caption("2030 라이프스타일 깊숙이 침투하는 것이 이번 리뉴얼의 핵심입니다. 단순 건강기능식품을 넘어 패션과 스포츠의 영역으로 확장합시다.")
