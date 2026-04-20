@@ -1,115 +1,116 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import requests
+import io
+from datetime import datetime
 
-# 1. 페이지 기본 설정
-st.set_page_config(page_title="KGC 브랜드전략실 - 3월 4주차 대시보드", layout="wide")
+# --- [1] 구글 시트 설정 (새 시트 ID 적용) ---
+SHEET_ID = "1p6KwL_FxoJtCtkhQoeq_aqIzFJ50e7lshyfWhtK030s"
+SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
-# --- [데이터 로드 섹션] ---
-# 구글 시트 주소 설정 (본인의 시트 ID와 gid 번호를 아래에 입력하세요)
-# 시트 URL 끝의 /edit... 부분을 /export?format=csv&gid=... 로 수정해야 합니다.
+st.set_page_config(page_title="Everytime Balance Dashboard", layout="wide")
 
-# 예시 주소 (실제 본인의 시트 주소로 교체 필요)
-KPI_URL = "https://docs.google.com/spreadsheets/d/1eDRHR3Jfd0P7hwmZy1d_Ncdb-AXhGhwe62lFaNKjF8s/export?format=csv&gid=0"
-REGION_URL = "https://docs.google.com/spreadsheets/d/1eDRHR3Jfd0P7hwmZy1d_Ncdb-AXhGhwe62lFaNKjF8s/export?format=csv&gid=1330935199"
-AGE_URL = "https://docs.google.com/spreadsheets/d/1eDRHR3Jfd0P7hwmZy1d_Ncdb-AXhGhwe62lFaNKjF8s/export?format=csv&gid=547463562"
+@st.cache_data(ttl=10)
+def load_data():
+    try:
+        res = requests.get(SHEET_URL)
+        res.encoding = 'utf-8'
+        if res.status_code != 200: return None
+        df = pd.read_csv(io.StringIO(res.text))
+        df['key'] = df['key'].astype(str).str.strip()
+        return df.set_index('key')['value'].to_dict()
+    except: return None
 
-@st.cache_data(ttl=600)  # 10분간 캐시 유지 (성능 최적화)
-def load_data(url):
-    return pd.read_csv(url)
+raw = load_data()
 
-try:
-    df_kpi = load_data(KPI_URL)
-    df_region = load_data(REGION_URL)
-    df_age = load_data(AGE_URL)
-except Exception as e:
-    st.error("⚠️ 데이터를 불러올 수 없습니다. 구글 시트 공유 설정과 URL을 확인해주세요.")
-    st.stop()
-# -----------------------
-
-# 2. 커스텀 CSS
-st.markdown("""
+if raw:
+    # --- [2] 디자인 스타일 ---
+    st.markdown("""
     <style>
-    .kpi-value { font-size: 28px; font-weight: bold; color: #A6192E; }
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
+        * { font-family: 'Pretendard', sans-serif; }
+        .report-card { background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; margin-bottom: 1rem; }
+        .header-box { background: #000; padding: 2.5rem; border-radius: 15px; color: white; margin-bottom: 2rem; border-left: 10px solid #c53030; }
+        .kpi-val { font-size: 2.2rem; font-weight: 900; color: #1a202c; margin: 0; }
+        .kpi-sub { font-size: 0.9rem; color: #c53030; font-weight: 700; margin-top: 5px; }
+        .tag { background: #f7fafc; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; color: #4a5568; border: 1px solid #edf2f7; display: inline-block; margin-right: 5px; }
+        .voc-pos { color: #2c5282; font-size: 0.95rem; line-height: 1.6; }
+        .voc-neg { color: #9b2c2c; font-size: 0.95rem; line-height: 1.6; }
     </style>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-# 3. 헤더 영역
-col_header1, col_header2 = st.columns([3, 1])
-with col_header1:
-    st.title("📈 에브리타임 밸런스 마케팅 대시보드")
-    st.markdown("**2026년 3월 4주차 | 리뉴얼 제품 판매 현황 분석**")
-with col_header2:
-    st.write("") 
-    st.info("👤 **팀장: 인선미** (Brand Strategy)")
+    # --- [3] 헤더 ---
+    st.markdown(f"""
+    <div class="header-box">
+        <h1 style="margin:0; font-size: 2.4rem;">{raw.get('title')}</h1>
+        <p style="margin:5px 0 0 0; opacity:0.7;">{raw.get('subtitle')}</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-st.markdown("---")
+    # --- [4] KPI 섹션 ---
+    cols = st.columns(4)
+    for i in range(1, 5):
+        with cols[i-1]:
+            st.markdown(f"""
+            <div class="report-card">
+                <p style="font-size:0.9rem; font-weight:700; color:#718096; margin-bottom:10px;">{raw.get(f'kpi_{i}_label')}</p>
+                <p class="kpi-val">{raw.get(f'kpi_{i}_val')}</p>
+                <p class="kpi-sub">{raw_data.get(f'kpi_{i}_sub') if 'raw_data' in locals() else raw.get(f'kpi_{i}_sub')}</p>
+            </div>
+            """, unsafe_allow_html=True)
 
-# 4. KPI 카드 영역 (구글 시트 데이터 기반)
-# 시트 구성: label, value, delta 컬럼이 있다고 가정
-kpi_cols = st.columns(len(df_kpi))
-
-for i, col in enumerate(kpi_cols):
-    # delta_color는 2번째(index 1), 4번째(index 3) 카드일 때 off 처리 (기존 로직 유지)
-    d_color = "off" if i in [1, 3] else "normal"
-    col.metric(
-        label=df_kpi.iloc[i]['label'], 
-        value=df_kpi.iloc[i]['value'], 
-        delta=df_kpi.iloc[i]['delta'],
-        delta_color=d_color
-    )
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# 5. 차트 영역
-chart_col1, chart_col2 = st.columns(2)
-
-with chart_col1:
-    st.subheader("지역별 판매 성장률 (%)")
-    # 시트 구성: 지역, 성장률 컬럼
-    fig_region = px.bar(
-        df_region, x="지역", y="성장률", text="성장률", 
-        color="지역", color_discrete_sequence=['#A6192E', '#94a3b8']
-    )
-    fig_region.update_layout(showlegend=False, margin=dict(t=20, b=20, l=0, r=0))
-    st.plotly_chart(fig_region, use_container_width=True)
-
-with chart_col2:
-    st.subheader("소비자 연령대 분포")
-    # 시트 구성: 연령대, 비중 컬럼
-    fig_age = px.pie(
-        df_age, values="비중", names="연령대", hole=0.5,
-        color_discrete_sequence=['#A6192E', '#C5A059', '#cbd5e1']
-    )
-    fig_age.update_layout(margin=dict(t=20, b=20, l=0, r=0), legend=dict(orientation="h", y=-0.1))
-    st.plotly_chart(fig_age, use_container_width=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# 6. 피드백 및 인사이트
-bottom_col1, bottom_col2 = st.columns([2, 1])
-
-with bottom_col1:
-    st.subheader("💬 실시간 고객 VOC 분석")
-    voc1, voc2 = st.columns(2)
-    with voc1:
-        st.success("**🟢 Positive**\n\n- 포장이 세련되어 선물용으로 최고입니다.\n- 기존 홍삼보다 쓴맛이 덜해서 먹기 편해요.")
-    with voc2:
-        st.error("**🔴 Improvement**\n\n- 리뉴얼 후 가격이 조금 오른 것 같아요.\n- **박스 개봉 시 가끔 뻑뻑함이 느껴집니다.**")
+    # --- [5] 차트 섹션 ---
+    c1, c2 = st.columns([1.5, 1])
+    with c1:
+        st.markdown('<div class="report-card"><h3>지역별 판매 성장률 (%)</h3>', unsafe_allow_html=True)
+        cv = [float(raw.get('chart_bar_1', 0)), float(raw_data.get('chart_bar_2', 0)) if 'raw_data' in locals() else float(raw.get('chart_bar_2', 0))]
+        fig1 = px.bar(x=['수도권(편의점)', '지방(대형마트)'], y=cv, color=cv, color_continuous_scale='Reds')
+        st.plotly_chart(fig1, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    st.subheader("💡 팀장 전략 제언 (Action Items)")
-    st.info("""
-    1. **아웃도어 마케팅:** 테니스/등산 커뮤니티 연계 '오운완' 캠페인 즉시 실행
-    2. **채널 최적화:** 지방권 대형마트 '가족 건강 키트' 번들 기획 구성
-    3. **품질 개선:** 패키지 개봉 편의성(Easy-off) 관련 생산 파트 피드백 전달
-    """)
+    with c2:
+        st.markdown('<div class="report-card"><h3>소비자 연령대 분포</h3>', unsafe_allow_html=True)
+        pv = [float(raw.get('chart_pie_1', 0)), float(raw.get('chart_pie_2', 0)), float(raw.get('chart_pie_3', 0))]
+        fig2 = px.pie(values=pv, names=['2030 사회초년생', '4050 부모세대', '기타'], hole=0.6, color_discrete_sequence=['#c53030', '#4a5568', '#cbd5e0'])
+        st.plotly_chart(fig2, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-with bottom_col2:
-    st.subheader("🔥 트렌드 키워드")
-    st.markdown("`#사회초년생` `#테니스` `#오운완` `#선물추천` `#등산` `#에너지부스터`")
+    # --- [6] VOC & 트렌드 ---
+    v1, v2 = st.columns(2)
+    with v1:
+        st.markdown(f"""
+        <div class="report-card">
+            <h3>실시간 고객의 소리 (VOC)</h3>
+            <p class="voc-pos"><b>✅ 긍정:</b> {raw.get('voc_pos_1')}<br>{raw.get('voc_pos_2')}</p>
+            <p class="voc-neg"><b>⚠️ 개선:</b> {raw.get('voc_neg_1')}<br>{raw.get('voc_neg_2')}</p>
+        </div>
+        """, unsafe_allow_html=True)
     
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("##### 📌 Today's Summary")
-    st.caption("2030 라이프스타일 깊숙이 침투하는 것이 이번 리뉴얼의 핵심입니다. 단순 건강기능식품을 넘어 패션과 스포츠의 영역으로 확장합시다.")
+    with v2:
+        tags = raw.get('trend_tags', '').split(' ')
+        tag_html = "".join([f'<span class="tag">{t}</span>' for t in tags])
+        st.markdown(f"""
+        <div class="report-card">
+            <h3>급상승 트렌드 키워드</h3>
+            <div style="margin-top:15px;">{tag_html}</div>
+            <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+            <p style="font-weight:700; color:#c53030; margin-bottom:5px;">💡 오늘의 한 줄 요약</p>
+            <p style="font-size:0.95rem; line-height:1.6;">{raw.get('summary')}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # --- [7] 팀장 액션 아이템 ---
+    st.markdown(f"""
+    <div class="report-card" style="border-top: 5px solid #000;">
+        <h3 style="margin-top:0;">🚀 팀장 주요 액션 아이템 (Action Items)</h3>
+        <ul style="line-height:2; font-size:1.05rem;">
+            <li>{raw.get('action_1')}</li>
+            <li>{raw.get('action_2')}</li>
+            <li>{raw.get('action_3')}</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+else:
+    st.error("데이터 로드 실패. 시트 공유 설정을 확인하세요.")
