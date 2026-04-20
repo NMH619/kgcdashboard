@@ -184,3 +184,6 @@ st.markdown(f"""
         <p style="font-size: 16px; line-height: 1.6; color: #334155;">{data['note']}</p>
     </div>
 """, unsafe_allow_html=True)
+streamlit
+plotly
+pandas
